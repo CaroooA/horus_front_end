@@ -18,33 +18,33 @@
           {{ scope.row.name }}
         </template>
       </el-table-column>
-      <el-table-column label="ip地址" width="250" align="center">
+      <el-table-column label="ip地址" width="300" align="center">
         <template slot-scope="scope">
           {{ scope.row.ip }}
         </template>
       </el-table-column>
-      <el-table-column label="tcpPort" width="150" align="center">
+      <el-table-column label="tcpPort" width="200" align="center">
         <template slot-scope="scope">
           {{ scope.row.tcpPort }}
         </template>
       </el-table-column>
-      <el-table-column label="lastUpdate" width="250" align="center">
+      <!--      <el-table-column label="lastUpdate" width="250" align="center">-->
+      <!--        <template slot-scope="scope">-->
+      <!--          {{ scope.row.humanReadableLastUpdate }}-->
+      <!--        </template>-->
+      <!--      </el-table-column>-->
+      <el-table-column class-name="status-col" label="状态" width="200" align="center">
         <template slot-scope="scope">
-          {{ scope.row.humanReadableLastUpdate }}
-        </template>
-      </el-table-column>
-      <el-table-column class-name="status-col" label="状态" width="110" align="center">
-        <template slot-scope="scope">
-          <el-tag type="success">{{ scope.row.status }}</el-tag>
+          <el-tag :type="statusItem[scope.row.status]">{{ scope.row.status }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column align="center" prop="created_at" label="所辖交换机数量" width="150">
         <template slot-scope="scope">
-          <span>{{ scope.row.number }}</span>
+          <span>{{ scope.row.deviceNum }}</span>
         </template>
       </el-table-column>
     </el-table>
-    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
+    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit="listQuery.size" @pagination="fetchData" />
 
   </div>
 </template>
@@ -72,11 +72,15 @@ export default {
       total: 0,
       listQuery: {
         page: 1,
-        limit: 20,
+        size: 10,
         importance: undefined,
         title: undefined,
-        type: undefined,
-        sort: '+id'
+        type: undefined
+      },
+      statusItem: {
+        READY: 'warning',
+        ACTIVE: 'success',
+        ERROR: 'error'
       }
     }
   },
@@ -87,8 +91,12 @@ export default {
     getList,
     fetchData() {
       this.listLoading = true
-      getList().then(response => {
-        this.list = response.data.items
+      const query = {
+        size: this.listQuery.size || '',
+        page: this.listQuery.page || ''
+      }
+      getList(query).then(response => {
+        this.list = response.data.nodes
         this.total = response.data.total
         this.listLoading = false
       })
